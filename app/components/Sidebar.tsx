@@ -2,11 +2,11 @@
 
 import { useStore } from '@/app/store/useStore';
 import {
-  Home, Library, Heart, Search, Plus, Music, Upload
+  Home, Library, Heart, Search, Plus, Music, Upload, LogOut, User
 } from 'lucide-react';
 
 export default function Sidebar() {
-  const { currentView, setView, albums, setShowUploadModal } = useStore();
+  const { currentView, setView, albums, setShowUploadModal, currentUser, signOut } = useStore();
 
   const navItems = [
     { id: 'home' as const, label: 'Home', icon: Home },
@@ -22,6 +22,24 @@ export default function Sidebar() {
       <div className="flex flex-col px-6 pt-7 pb-6 lg:px-6 lg:pt-7 lg:pb-6">
         <img src="/yeezify-logo.svg" alt="YeeZify logo" className="h-14 w-auto" />
       </div>
+
+      {currentUser && (
+        <div className="mx-3 mb-4 rounded-3xl border border-ye-border bg-ye-card/80 p-4 text-sm text-ye-text">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-ye-gold-light">Signed in as</p>
+              <p className="mt-2 font-semibold text-white truncate">{currentUser.username}</p>
+            </div>
+            <button
+              onClick={signOut}
+              className="rounded-full bg-white/5 p-2 text-ye-muted hover:bg-white/10 hover:text-white transition"
+              title="Sign out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="px-3 py-3 flex gap-2 overflow-x-auto lg:flex-col lg:space-y-2 lg:overflow-visible">
         {navItems.map(({ id, label, icon: Icon }) => (

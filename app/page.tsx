@@ -12,36 +12,26 @@ export default function HomePage() {
         <section className="rounded-[36px] border border-white/10 bg-white/5 p-8 shadow-[0_40px_120px_rgba(99,65,255,0.24)] backdrop-blur-xl">
           <div className="flex flex-wrap items-center gap-3 text-sm uppercase tracking-[0.35em] text-ye-gold">
             <Sparkles size={18} />
-            <span>New music vault</span>
+
           </div>
 
           <div className="mt-8 space-y-6">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-ye-gold-light">Yeezify</p>
+              <p className="text-sm uppercase tracking-[0.35em] text-ye-gold-light">Launch the app to manage your playlists, create user accounts, upload album collections, and share selected albums with friends via a simple backend API.</p>
               <h1 className="mt-4 text-5xl font-semibold tracking-tight text-white sm:text-6xl">
-                Store music. Share albums. Discover together.
+                Yeezify
               </h1>
             </div>
 
             <p className="max-w-2xl text-base leading-8 text-ye-muted">
-              Launch the app to manage your playlists, create user accounts, upload album collections, and share selected albums with friends via a simple backend API.
+              Store music. Share albums. Discover together.
             </p>
           </div>
 
           <AuthPanel />
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Link
-                href="/player"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c4dff] via-[#6b35ff] to-[#4f1be5] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(124,77,255,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(124,77,255,0.28)]"
-              >
-                Open the app
-                <ArrowRight size={18} />
-              </Link>
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-ye-text">
-                Version <span className="font-semibold text-white">{appConfig.version}</span>
-              </div>
-            </div>
+          <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-ye-text">
+            Version <span className="font-semibold text-white">{appConfig.version}</span>
           </div>
         </section>
 

@@ -1,4 +1,10 @@
 {
-  "users": {},
+  "users": {
+    "8a4be8ca-3b7d-43b9-9f55-6dfbbe64045b": {
+      "id": "8a4be8ca-3b7d-43b9-9f55-6dfbbe64045b",
+      "username": "Yo",
+      "createdAt": 1778395397430
+    }
+  },
   "albums": {}
 }

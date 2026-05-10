@@ -21,10 +21,10 @@ export default function FavoritesView() {
   return (
     <div className="flex-1 overflow-y-auto fade-in">
       {/* Hero gradient */}
-      <div className="px-8 pt-8 pb-6" style={{ background: 'linear-gradient(180deg, #7a4d2a55 0%, #0a0a0a 100%)' }}>
+      <div className="px-8 pt-8 pb-6" style={{ background: 'linear-gradient(180deg, #371d804d 0%, #0a0a0a 100%)' }}>
         <div className="flex items-end gap-6">
           <div className="w-48 h-48 rounded-xl flex items-center justify-center shadow-2xl flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #c9a84c, #7a4d2a)' }}>
+            style={{ background: 'linear-gradient(135deg, #7c4dff4d, #0000002a)' }}>
             <Heart size={64} className="text-white" fill="white" />
           </div>
           <div className="pb-2">
