@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { useEffect } from 'react';
 import { useStore } from '@/app/store/useStore';
 import { useAudioPlayer } from '@/app/hooks/useAudioPlayer';

@@ -1,15 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSharedAlbumsForUser, getUserById } from '@/backend/db';
 
-interface Params {
-  params: { userId: string };
-}
-
-export async function GET(_request: Request, { params }: Params) {
-  const user = await getUserById(params.userId);
+export async function GET(_request: NextRequest, context: { params: Promise<{ userId: string }> }) {
+  const { userId } = await context.params;
+  const user = await getUserById(userId);
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
-  const shared = await getSharedAlbumsForUser(params.userId);
+  const shared = await getSharedAlbumsForUser(userId);
   return NextResponse.json(shared);
 }

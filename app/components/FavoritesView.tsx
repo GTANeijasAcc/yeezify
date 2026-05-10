@@ -24,7 +24,7 @@ export default function FavoritesView() {
       <div className="px-8 pt-8 pb-6" style={{ background: 'linear-gradient(180deg, #371d804d 0%, #0a0a0a 100%)' }}>
         <div className="flex items-end gap-6">
           <div className="w-48 h-48 rounded-xl flex items-center justify-center shadow-2xl flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #7c4dff4d, #0000002a)' }}>
+            style={{ background: 'linear-gradient(135deg, #0000002a, #7c4dff4d)' }}>
             <Heart size={64} className="text-white" fill="white" />
           </div>
           <div className="pb-2">
