@@ -1,6 +1,5 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from './supabase';
 
 export interface DbUser {
   id: string;
@@ -28,106 +27,122 @@ export interface DbAlbum {
   createdAt: number;
 }
 
-interface DbSchema {
-  users: Record<string, DbUser>;
-  albums: Record<string, DbAlbum>;
-}
+const USERS_TABLE = 'users';
+const ALBUMS_TABLE = 'albums';
 
-const dbPath = path.join(process.cwd(), 'backend', 'data', 'db.json');
-
-async function ensureDbFile() {
-  try {
-    await fs.access(dbPath);
-  } catch {
-    await fs.mkdir(path.dirname(dbPath), { recursive: true });
-    await fs.writeFile(dbPath, JSON.stringify({ users: {}, albums: {} }, null, 2), 'utf8');
+export async function getAllUsers(): Promise<DbUser[]> {
+  const { data, error } = await supabase.from(USERS_TABLE).select('*');
+  if (error) {
+    console.error('Error fetching users:', error);
+    return [];
   }
+  return data as DbUser[];
 }
 
-async function readDb(): Promise<DbSchema> {
-  await ensureDbFile();
-  const raw = await fs.readFile(dbPath, 'utf8');
-  return JSON.parse(raw) as DbSchema;
+export async function getUserById(userId: string): Promise<DbUser | null> {
+  const { data, error } = await supabase.from(USERS_TABLE).select('*').eq('id', userId).single();
+  if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    console.error('Error fetching user by ID:', error);
+    return null;
+  }
+  return data as DbUser | null;
 }
 
-async function writeDb(data: DbSchema) {
-  await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
+export async function getUserByUsername(username: string): Promise<DbUser | null> {
+  const { data, error } = await supabase.from(USERS_TABLE).select('*').ilike('username', username).single();
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching user by username:', error);
+    return null;
+  }
+  return data as DbUser | null;
 }
 
-export async function getAllUsers() {
-  const db = await readDb();
-  return Object.values(db.users);
-}
-
-export async function getUserById(userId: string) {
-  const db = await readDb();
-  return db.users[userId] ?? null;
-}
-
-export async function getUserByUsername(username: string) {
-  const db = await readDb();
-  return Object.values(db.users).find((user) => user.username.toLowerCase() === username.toLowerCase()) ?? null;
-}
-
-export async function createUser(username: string) {
-  const db = await readDb();
+export async function createUser(username: string): Promise<DbUser> {
   const existing = await getUserByUsername(username);
   if (existing) {
     return existing;
   }
-  const id = uuidv4();
-  const user: DbUser = { id, username, createdAt: Date.now() };
-  db.users[id] = user;
-  await writeDb(db);
-  return user;
+  const user: DbUser = { id: uuidv4(), username, createdAt: Date.now() };
+  const { data, error } = await supabase.from(USERS_TABLE).insert([user]).select().single();
+  if (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+  return data as DbUser;
 }
 
-export async function getAlbumById(albumId: string) {
-  const db = await readDb();
-  return db.albums[albumId] ?? null;
+export async function getAlbumById(albumId: string): Promise<DbAlbum | null> {
+  const { data, error } = await supabase.from(ALBUMS_TABLE).select('*').eq('id', albumId).single();
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching album by ID:', error);
+    return null;
+  }
+  return data as DbAlbum | null;
 }
 
-export async function getAlbumsByOwner(ownerId: string) {
-  const db = await readDb();
-  return Object.values(db.albums).filter((album) => album.ownerId === ownerId);
+export async function getAlbumsByOwner(ownerId: string): Promise<DbAlbum[]> {
+  const { data, error } = await supabase.from(ALBUMS_TABLE).select('*').eq('ownerId', ownerId);
+  if (error) {
+    console.error('Error fetching albums by owner:', error);
+    return [];
+  }
+  return data as DbAlbum[];
 }
 
-export async function getSharedAlbumsForUser(userId: string) {
-  const db = await readDb();
-  return Object.values(db.albums).filter((album) => album.sharedWith.includes(userId));
+export async function getSharedAlbumsForUser(userId: string): Promise<DbAlbum[]> {
+  const { data, error } = await supabase.from(ALBUMS_TABLE).select('*').contains('sharedWith', [userId]);
+  if (error) {
+    console.error('Error fetching shared albums:', error);
+    return [];
+  }
+  return data as DbAlbum[];
 }
 
-export async function createAlbum(ownerId: string, albumData: Omit<DbAlbum, 'id' | 'createdAt' | 'sharedWith'>) {
-  const db = await readDb();
-  const id = uuidv4();
+export async function createAlbum(ownerId: string, albumData: Omit<DbAlbum, 'id' | 'createdAt' | 'sharedWith'>): Promise<DbAlbum> {
   const album: DbAlbum = {
     ...albumData,
-    id,
+    id: uuidv4(),
     ownerId,
     sharedWith: [],
     createdAt: Date.now(),
   };
-  db.albums[id] = album;
-  await writeDb(db);
-  return album;
+  const { data, error } = await supabase.from(ALBUMS_TABLE).insert([album]).select().single();
+  if (error) {
+    console.error('Error creating album:', error);
+    throw error;
+  }
+  return data as DbAlbum;
 }
 
-export async function shareAlbum(albumId: string, toUserId: string) {
-  const db = await readDb();
-  const album = db.albums[albumId];
+export async function shareAlbum(albumId: string, toUserId: string): Promise<DbAlbum | null> {
+  const album = await getAlbumById(albumId);
   if (!album) return null;
-  if (!db.users[toUserId]) return null;
-  album.sharedWith = Array.from(new Set([...album.sharedWith, toUserId]));
-  db.albums[albumId] = album;
-  await writeDb(db);
-  return album;
+
+  const user = await getUserById(toUserId);
+  if (!user) return null;
+
+  const updatedSharedWith = Array.from(new Set([...album.sharedWith, toUserId]));
+  const { data, error } = await supabase.from(ALBUMS_TABLE)
+    .update({ sharedWith: updatedSharedWith })
+    .eq('id', albumId)
+    .select().single();
+
+  if (error) {
+    console.error('Error sharing album:', error);
+    return null;
+  }
+  return data as DbAlbum;
 }
 
-export async function updateAlbum(albumId: string, updates: Partial<Omit<DbAlbum, 'id' | 'ownerId' | 'createdAt'>> ) {
-  const db = await readDb();
-  const album = db.albums[albumId];
-  if (!album) return null;
-  db.albums[albumId] = { ...album, ...updates };
-  await writeDb(db);
-  return db.albums[albumId];
+export async function updateAlbum(albumId: string, updates: Partial<Omit<DbAlbum, 'id' | 'ownerId' | 'createdAt'>>): Promise<DbAlbum | null> {
+  const { data, error } = await supabase.from(ALBUMS_TABLE)
+    .update(updates)
+    .eq('id', albumId)
+    .select().single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error updating album:', error);
+    return null;
+  }
+  return data as DbAlbum | null;
 }
