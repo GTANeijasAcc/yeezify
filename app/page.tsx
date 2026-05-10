@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowRight, Disc, Sparkles } from 'lucide-react';
 import { appConfig } from '@/app/lib/appConfig';
+import AuthPanel from '@/app/components/AuthPanel';
 
 export default function HomePage() {
   return (
@@ -23,8 +26,11 @@ export default function HomePage() {
             <p className="max-w-2xl text-base leading-8 text-ye-muted">
               Launch the app to manage your playlists, create user accounts, upload album collections, and share selected albums with friends via a simple backend API.
             </p>
+          </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <AuthPanel />
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <Link
                 href="/player"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c4dff] via-[#6b35ff] to-[#4f1be5] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(124,77,255,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(124,77,255,0.28)]"

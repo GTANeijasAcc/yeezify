@@ -28,6 +28,11 @@ export interface Album {
   color?: string; // dominant color for theming
 }
 
+export interface User {
+  id: string;
+  username: string;
+}
+
 export interface PlayerState {
   currentTrack: Track | null;
   queue: Track[];
@@ -52,9 +57,14 @@ export interface AppState {
   // UI
   currentView: 'home' | 'library' | 'favorites' | 'album' | 'search' | 'nowplaying';
   selectedAlbumId: string | null;
+  currentUser: User | null;
   showLyrics: boolean;
   showUploadModal: boolean;
   searchQuery: string;
+
+  // Actions - Auth
+  setCurrentUser: (user: User | null) => void;
+  signOut: () => void;
 
   // Actions - Data
   addTracks: (newTracks: Omit<Track, 'id' | 'isFavorite' | 'addedAt'>[]) => void;
@@ -124,9 +134,13 @@ export const useStore = create<AppState>()(
 
       currentView: 'home',
       selectedAlbumId: null,
+      currentUser: null,
       showLyrics: false,
       showUploadModal: false,
       searchQuery: '',
+
+      setCurrentUser: (user) => set({ currentUser: user }),
+      signOut: () => set({ currentUser: null }),
 
       addTracks: (newTracks) => {
         set(state => {
@@ -324,6 +338,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         currentView: state.currentView,
         selectedAlbumId: state.selectedAlbumId,
+        currentUser: state.currentUser,
         showLyrics: state.showLyrics,
         searchQuery: state.searchQuery,
         player: {
