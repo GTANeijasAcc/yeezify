@@ -2,8 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;  // Create an unmodified response
+  const supabaseUrl = "https://crqkfhxikqcxendbqzug.supabase.co";
+  const supabaseKey = "sb_publishable_1at0SgXvPtIKvS_-4e49Iw_sx-xyIzJ";
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
