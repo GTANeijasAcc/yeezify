@@ -9,14 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'ye-black': '#0a0a0a',
-        'ye-dark': '#111111',
-        'ye-card': '#1a1a1a',
-        'ye-border': '#2a2a2a',
-        'ye-muted': '#888888',
-        'ye-text': '#e8e8e8',
-        'ye-gold': '#c8a96e',
-        'ye-gold-light': '#e8c98e',
+        'ye-black': '#08030c',
+        'ye-dark': '#100a1d',
+        'ye-card': '#160f25',
+        'ye-border': '#4b357d',
+        'ye-muted': '#b8b4cd',
+        'ye-text': '#f3f1ff',
+        'ye-gold': '#e1c96b',
+        'ye-gold-light': '#f3e2a0',
+        'ye-purple': '#7c4dff',
+        'ye-deep': '#150a26',
         'ye-accent': '#ffffff',
       },
       fontFamily: {
