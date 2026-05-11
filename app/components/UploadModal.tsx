@@ -14,7 +14,7 @@ interface ParsedTrack {
 }
 
 export default function UploadModal() {
-  const { setShowUploadModal, addAlbum, addTracks, tracks: existingTracks, albums } = useStore();
+  const { setShowUploadModal, addAlbum, addTracks, syncAlbumToDatabase, currentUser, tracks: existingTracks, albums } = useStore();
   const [step, setStep] = useState<'upload' | 'configure' | 'done'>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const [parsedTracks, setParsedTracks] = useState<ParsedTrack[]>([]);
@@ -83,7 +83,7 @@ export default function UploadModal() {
     let coverUrl = '';
     if (coverFile) coverUrl = await fileToDataURL(coverFile);
 
-    // Create album
+    // Create album locally first
     const albumId = addAlbum({
       title: finalName,
       artist: finalArtist,
@@ -104,9 +104,8 @@ export default function UploadModal() {
 
     addTracks(trackData);
 
-    // Link tracks to album (we need IDs after creation)
-    // We do this by updating the album with track IDs
-    setTimeout(() => {
+    // Link tracks to album and sync to database if user is logged in
+    setTimeout(async () => {
       const state = useStore.getState();
       const albumTracks = Object.values(state.tracks)
         .filter(t => t.albumId === albumId)
@@ -117,6 +116,12 @@ export default function UploadModal() {
           [albumId]: { ...s.albums[albumId], tracks: albumTracks },
         }
       }));
+
+      // Sync to Supabase database if user is logged in
+      if (state.currentUser) {
+        await syncAlbumToDatabase(albumId);
+      }
+
       setStep('done');
       setLoading(false);
       setTimeout(() => setShowUploadModal(false), 1200);

@@ -69,6 +69,8 @@ export interface AppState {
   // Actions - Data
   addTracks: (newTracks: Omit<Track, 'id' | 'isFavorite' | 'addedAt'>[]) => void;
   addAlbum: (album: Omit<Album, 'id' | 'createdAt'>) => string;
+  syncAlbumToDatabase: (albumId: string) => Promise<void>;
+  syncAlbumsFromDatabase: (userId: string) => Promise<void>;
   updateAlbumCover: (albumId: string, coverUrl: string) => void;
   updateTrackLyrics: (trackId: string, lyrics: string) => void;
   toggleFavorite: (trackId: string) => void;
@@ -163,6 +165,98 @@ export const useStore = create<AppState>()(
           }
         }));
         return id;
+      },
+
+      syncAlbumToDatabase: async (albumId) => {
+        const state = get();
+        const album = state.albums[albumId];
+        const albumTracks = Object.values(state.tracks).filter(t => t.albumId === albumId);
+        if (!album || !state.currentUser) return;
+
+        try {
+          const response = await fetch('/api/albums', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerId: state.currentUser.id,
+              title: album.title,
+              artist: album.artist,
+              coverUrl: album.coverUrl,
+              tracks: albumTracks.map(t => ({
+                id: t.id,
+                title: t.title,
+                artist: t.artist,
+                duration: t.duration,
+                url: t.url,
+                coverUrl: t.coverUrl,
+              })),
+            }),
+          });
+
+          if (response.ok) {
+            const dbAlbum = await response.json();
+            // Update local state with database ID
+            set(state => ({
+              albums: {
+                ...state.albums,
+                [albumId]: { ...state.albums[albumId], id: dbAlbum.id },
+              },
+              tracks: Object.fromEntries(
+                Object.entries(state.tracks).map(([tid, t]) =>
+                  t.albumId === albumId ? [tid, { ...t, albumId: dbAlbum.id }] : [tid, t]
+                )
+              ),
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to sync album to database:', error);
+        }
+      },
+
+      syncAlbumsFromDatabase: async (userId) => {
+        try {
+          const response = await fetch(`/api/albums?owner=${encodeURIComponent(userId)}`);
+          if (!response.ok) return;
+
+          const data = await response.json();
+          const { owned } = data;
+
+          set(state => {
+            const updatedAlbums = { ...state.albums };
+            const updatedTracks = { ...state.tracks };
+
+            owned?.forEach((dbAlbum: any) => {
+              // Only add if not already present locally
+              if (!state.albums[dbAlbum.id]) {
+                updatedAlbums[dbAlbum.id] = {
+                  id: dbAlbum.id,
+                  title: dbAlbum.title,
+                  artist: dbAlbum.artist,
+                  coverUrl: dbAlbum.coverUrl,
+                  tracks: [],
+                  createdAt: dbAlbum.createdAt,
+                };
+
+                // Add tracks from database
+                dbAlbum.tracks?.forEach((t: any) => {
+                  const trackId = uuidv4();
+                  updatedTracks[trackId] = {
+                    ...t,
+                    album: dbAlbum.title,
+                    albumId: dbAlbum.id,
+                    isFavorite: false,
+                    addedAt: Date.now(),
+                  };
+                  updatedAlbums[dbAlbum.id].tracks.push(trackId);
+                });
+              }
+            });
+
+            return { albums: updatedAlbums, tracks: updatedTracks };
+          });
+        } catch (error) {
+          console.error('Failed to sync albums from database:', error);
+        }
       },
 
       updateAlbumCover: (albumId, coverUrl) => {

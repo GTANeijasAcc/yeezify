@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAlbum, getAlbumById, getAlbumsByOwner, getSharedAlbumsForUser } from '@/backend/db';
+import { createAlbum, getAlbumById, getAlbumsByOwner, getSharedAlbumsForUser, getUserById } from '@/backend/db';
+
+// Optional auth middleware - extracts user ID from request if provided
+async function getAuthenticatedUserId(request: NextRequest): Promise<string | null> {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader) return null;
+
+  try {
+    const userId = authHeader.replace('Bearer ', '');
+    const user = await getUserById(userId);
+    return user ? userId : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const ownerId = request.nextUrl.searchParams.get('owner');
@@ -34,6 +48,12 @@ export async function POST(request: NextRequest) {
 
   if (!ownerId || !title || !artist) {
     return NextResponse.json({ error: 'ownerId, title, and artist are required' }, { status: 400 });
+  }
+
+  // Verify the owner exists
+  const owner = await getUserById(ownerId);
+  if (!owner) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
   const album = await createAlbum(ownerId, { title, artist, coverUrl, tracks, ownerId } as any);

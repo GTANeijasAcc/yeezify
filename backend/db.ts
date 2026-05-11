@@ -1,10 +1,33 @@
 import { v4 as uuidv4 } from 'uuid';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { supabase } from './supabase';
 
 export interface DbUser {
   id: string;
   username: string;
+  passwordHash: string;
+  passwordSalt: string;
   createdAt: number;
+}
+
+// Password hashing utilities using Node.js crypto
+function hashPassword(password: string, salt: string): string {
+  return createHash('sha256').update(password + salt).digest('hex');
+}
+
+export function createPasswordHash(password: string): { hash: string; salt: string } {
+  const salt = randomBytes(16).toString('hex');
+  const hash = hashPassword(password, salt);
+  return { hash, salt };
+}
+
+export function verifyPassword(password: string, storedHash: string, storedSalt: string): boolean {
+  const hash = hashPassword(password, storedSalt);
+  try {
+    return timingSafeEqual(Buffer.from(hash), Buffer.from(storedHash));
+  } catch {
+    return false;
+  }
 }
 
 export interface DbTrack {
@@ -57,12 +80,23 @@ export async function getUserByUsername(username: string): Promise<DbUser | null
   return data as DbUser | null;
 }
 
-export async function createUser(username: string): Promise<DbUser> {
+export async function getUserByUsernameAndPassword(username: string, password: string): Promise<DbUser | null> {
+  const user = await getUserByUsername(username);
+  if (!user) return null;
+
+  if (!verifyPassword(password, user.passwordHash, user.passwordSalt)) {
+    return null;
+  }
+  return user;
+}
+
+export async function createUser(username: string, password: string): Promise<DbUser> {
   const existing = await getUserByUsername(username);
   if (existing) {
-    return existing;
+    throw new Error('Username already exists');
   }
-  const user: DbUser = { id: uuidv4(), username, createdAt: Date.now() };
+  const { hash, salt } = createPasswordHash(password);
+  const user: DbUser = { id: uuidv4(), username, passwordHash: hash, passwordSalt: salt, createdAt: Date.now() };
   const { data, error } = await supabase.from(USERS_TABLE).insert([user]).select().single();
   if (error) {
     console.error('Error creating user:', error);
